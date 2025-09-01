@@ -70,17 +70,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             f"✅ **আপনার আবেদনটি সফলভাবে জমা পড়েছে!** ✅\n\n"
             f"আপনার আবেদনটি এখন আমাদের টেস্টিং টিমের কাছে পাঠানো হয়েছে। দয়া করে একটু অপেক্ষা করুন। কিছুক্ষণের মধ্যেই আপনাকে অ্যাপ্রুভ দেয়া হবে এবং আপনি আপনার হ্যাকটি ব্যবহার করতে পারবেন।"
         )
+        await update.message.reply_text(response_message)
         
-        # অ্যাপ্রুভাল কি এর জন্য কপি বাটন তৈরি করা
-        key_button = [[InlineKeyboardButton(text=f"কপি করতে ক্লিক করুন: {random_key}", url=f"https://t.me/share/url?url={random_key}")]]
-        key_markup = InlineKeyboardMarkup(key_button)
-
-        await update.message.reply_text(response_message, reply_markup=key_markup)
-
         # কনফার্ম এবং রিজেক্ট বাটন তৈরি করা
         keyboard = [
             [
-                InlineKeyboardButton("কনফার্ম", callback_data=f"CONFIRM_{user_id}_{random_key}"),
+                InlineKeyboardButton("কনফার্ম", callback_data=f"CONFIRM_{user_id}_{random_key}_{user_uid}"),
                 InlineKeyboardButton("রিজেক্ট", callback_data=f"REJECT_{user_id}_{random_key}")
             ]
         ]
@@ -120,6 +115,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if action == "CONFIRM":
         user_id = data[1]
         key = data[2]
+        uid = data[3]
         
         # মূল মেসেজ থেকে সম্পূর্ণ তথ্য বের করা
         original_message_text = query.message.text
@@ -127,7 +123,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # কনফার্ম বাটন চাপলে দ্বিতীয় চ্যানেলে একটি নতুন কনফার্ম বাটন সহ সম্পূর্ণ তথ্য পাঠানো হচ্ছে
         bot = Bot(TOKEN)
         
-        keyboard_two = [[InlineKeyboardButton("চূড়ান্ত কনফার্ম", callback_data=f"FINAL_CONFIRM_{user_id}_{key}")]]
+        keyboard_two = [[InlineKeyboardButton("চূড়ান্ত কনফার্ম", callback_data=f"FINAL_CONFIRM_{user_id}_{key}_{uid}")]]
         reply_markup_two = InlineKeyboardMarkup(keyboard_two)
         
         await bot.send_message(
@@ -146,6 +142,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif action == "FINAL_CONFIRM":
         user_id = data[1]
         key = data[2]
+        uid = data[3]
         
         # দ্বিতীয় চ্যানেলের চূড়ান্ত কনফার্ম বাটন চাপলে ইউজারকে নোটিফিকেশন পাঠানো হচ্ছে
         bot = Bot(TOKEN)
@@ -154,14 +151,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         notification_message = (
             f"🎉 **অভিনন্দন!** 🎉\n\n"
             f"আপনার হ্যাকটি সফলভাবে অ্যাপ্রুভ হয়েছে। এখন আপনি আপনার হ্যাকটি লগইন করতে পারবেন।\n\n"
-            f"আপনার সিক্রেট কি: `{key}`\n\n"
-            f"এই কি দিয়ে আপনার হ্যাকটি লগইন করুন।"
+            f"আপনার অ্যাপ্রুভাল কি: `{key}`\n"
+            f"আপনার গেমের ইউআইডি: `{uid}`\n\n"
+            f"এই তথ্য দিয়ে আপনার হ্যাকটি লগইন করুন।"
         )
-        # অ্যাপ্রুভাল কি এর জন্য কপি বাটন যোগ করা
-        copy_button = [[InlineKeyboardButton(text=f"কপি করতে ক্লিক করুন: {key}", url=f"https://t.me/share/url?url={key}")]]
-        copy_markup = InlineKeyboardMarkup(copy_button)
         
-        await bot.send_message(chat_id=user_id, text=notification_message, reply_markup=copy_markup)
+        await bot.send_message(chat_id=user_id, text=notification_message)
         
         # দ্বিতীয় চ্যানেলের মেসেজ আপডেট করা হচ্ছে
         await query.edit_message_text(text=f"✅ এই ইউজারকে অ্যাপ্রুভাল দেওয়া হয়েছে।")
